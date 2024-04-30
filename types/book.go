@@ -3,7 +3,8 @@ package types
 import "errors"
 
 var (
-	ErrBookNotExist = errors.New("book does not exist")
+	ErrBookNotExist       = errors.New("book does not exist")
+	ErrBookStatusConflict = errors.New("book status conflict")
 )
 
 type BookType string
@@ -23,25 +24,15 @@ const (
 )
 
 type Book struct {
-	ID       int64
-	Title    string
-	AuthorId int64
-	Type     BookType
-	Status   BookStatus
+	ID       int64      `json:"id"`
+	Title    string     `json:"title"`
+	AuthorId int64      `json:"authorId"`
+	Type     BookType   `json:"type"`
+	Status   BookStatus `json:"status"`
 }
 
 type BookFilter struct {
 	Statuses []BookStatus
-}
-
-func CopyBook(book Book) Book {
-	return Book{
-		ID:       book.ID,
-		Title:    book.Title,
-		AuthorId: book.AuthorId,
-		Type:     book.Type,
-		Status:   book.Status,
-	}
 }
 
 func NewBook(id int64, title string, authorId int64, bookType BookType, status BookStatus) Book {

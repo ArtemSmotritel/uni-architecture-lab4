@@ -40,6 +40,11 @@ func (s *LibraryServer) getRouter() *http.ServeMux {
 	mux.HandleFunc("POST /books", s.handleAddBook)
 	mux.HandleFunc("GET /books", s.handleGetBooks)
 	mux.HandleFunc("DELETE /books/{id}", s.handleRemoveBook)
+	mux.HandleFunc("GET /books/{id}", s.handleGetBook)
+	mux.HandleFunc("POST /books/{id}/lend", s.handleLendBook)
+	mux.HandleFunc("POST /books/{id}/return", s.handleReturnBook)
+
+	mux.HandleFunc("GET /authors", s.handleGetAuthors)
 
 	return mux
 }

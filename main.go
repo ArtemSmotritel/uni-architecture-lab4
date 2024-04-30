@@ -13,8 +13,10 @@ func main() {
 	service := service2.NewService(db)
 	logger := log.Default()
 
-	b1 := types.NewBook(0, "The Hobbit or There and back again", 0, types.PAPER_BOOK, types.AVAILABLE)
-	b2 := types.NewBook(2, "The Fellowship Of The Ring", 0, types.PAPER_BOOK, types.LENT)
+	db.AddAuthor(types.Author{FullName: "John Ronald Reuel Tolkien", ShortName: "J. R. R. Tolkien"})
+
+	b1 := types.NewBook(0, "The Hobbit or There and back again", 1, types.PAPER_BOOK, types.AVAILABLE)
+	b2 := types.NewBook(2, "The Fellowship Of The Ring", 1, types.PAPER_BOOK, types.LENT)
 	db.AddBook(b1)
 	db.AddBook(b2)
 

@@ -1,15 +1,16 @@
 package service
 
 import (
+	"fmt"
 	"github.com/artemsmotritel/uni-architecture-lab4/database"
 	"github.com/artemsmotritel/uni-architecture-lab4/types"
 	"strings"
 )
 
 type AddBookInput struct {
-	Title    string
-	AuthorId int64
-	Type     types.BookType
+	Title    string         `json:"title"`
+	AuthorId int64          `json:"authorId"`
+	Type     types.BookType `json:"type"`
 }
 
 type addBookValidator struct {
@@ -27,7 +28,7 @@ func newAddBookValidator(db database.Database) *addBookValidator {
 func (v *addBookValidator) validate(input AddBookInput) bool {
 	if input.AuthorId == 0 {
 		v.errors["AuthorId"] = "authorId is missing"
-	} else if _, err := v.db.GetUser(input.AuthorId); err != nil {
+	} else if _, err := v.db.GetAuthor(input.AuthorId); err != nil {
 		v.errors["AuthorId"] = "authorId doesn't exist"
 	}
 
@@ -35,8 +36,10 @@ func (v *addBookValidator) validate(input AddBookInput) bool {
 		v.errors["Title"] = "title is missing"
 	}
 
-	if strings.TrimSpace(string(input.Type)) == "" {
+	if bookType := strings.TrimSpace(string(input.Type)); bookType == "" {
 		v.errors["Type"] = "type is missing"
+	} else if bookType != string(types.PAPER_BOOK) && bookType != string(types.E_BOOK) {
+		v.errors["Type"] = "type is invalid"
 	}
 
 	return len(v.errors) == 0
@@ -46,7 +49,13 @@ func (s *Service) AddBook(input AddBookInput) (types.Book, error) {
 	validator := newAddBookValidator(s.DB)
 
 	if ok := validator.validate(input); !ok {
-		return types.Book{}, ErrFailedValidation
+		values := make([]string, 0, len(validator.errors))
+
+		for _, err := range validator.errors {
+			values = append(values, err)
+		}
+
+		return types.Book{}, fmt.Errorf("%s, %w", strings.Join(values, ";"), ErrFailedValidation)
 	}
 
 	book := types.NewBook(0, input.Title, input.AuthorId, input.Type, types.AVAILABLE)
@@ -80,4 +89,16 @@ func (s *Service) GetBooks(statuses []string) ([]types.Book, error) {
 
 func (s *Service) RemoveBook(id int64) error {
 	return s.DB.RemoveBook(id)
+}
+
+func (s *Service) GetBook(id int64) (types.Book, error) {
+	return s.DB.GetBook(id)
+}
+
+func (s *Service) LendBook(id int64) error {
+	return s.DB.LendBook(id)
+}
+
+func (s *Service) ReturnBook(id int64) error {
+	return s.DB.ReturnBook(id)
 }

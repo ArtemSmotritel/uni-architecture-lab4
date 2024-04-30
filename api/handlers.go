@@ -29,6 +29,8 @@ func (s *LibraryServer) handleAddBook(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(book); err != nil {
 		http.Error(w, "Something went terribly wrong", http.StatusInternalServerError)
+	} else {
+		w.WriteHeader(http.StatusCreated)
 	}
 }
 
@@ -59,5 +61,76 @@ func (s *LibraryServer) handleRemoveBook(w http.ResponseWriter, r *http.Request)
 		} else {
 			http.Error(w, "Something went terribly wrong", http.StatusInternalServerError)
 		}
+	} else {
+		w.WriteHeader(http.StatusNoContent)
 	}
+}
+
+func (s *LibraryServer) handleGetBook(w http.ResponseWriter, r *http.Request) {
+	bookIdStr := r.PathValue("id")
+	bookId, err := strconv.ParseInt(bookIdStr, 10, 64)
+	if err != nil {
+		http.Error(w, "Wrong book id format", http.StatusBadRequest)
+		return
+	}
+
+	book, err := s.Service.GetBook(bookId)
+	if err != nil {
+		if errors.Is(err, types.ErrBookNotExist) {
+			http.Error(w, err.Error(), http.StatusNotFound)
+		} else {
+			http.Error(w, "Something went terribly wrong", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(book); err != nil {
+		http.Error(w, "Something went terribly wrong", http.StatusInternalServerError)
+	}
+}
+
+func (s *LibraryServer) handleLendBook(w http.ResponseWriter, r *http.Request) {
+	bookIdStr := r.PathValue("id")
+	bookId, err := strconv.ParseInt(bookIdStr, 10, 64)
+	if err != nil {
+		http.Error(w, "Wrong book id format", http.StatusBadRequest)
+		return
+	}
+
+	if err := s.Service.LendBook(bookId); err != nil {
+		if errors.Is(err, types.ErrBookNotExist) {
+			http.Error(w, err.Error(), http.StatusNotFound)
+		} else if errors.Is(err, types.ErrBookStatusConflict) {
+			http.Error(w, err.Error(), http.StatusConflict)
+		}
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (s *LibraryServer) handleReturnBook(w http.ResponseWriter, r *http.Request) {
+	bookIdStr := r.PathValue("id")
+	bookId, err := strconv.ParseInt(bookIdStr, 10, 64)
+	if err != nil {
+		http.Error(w, "Wrong book id format", http.StatusBadRequest)
+		return
+	}
+
+	if err := s.Service.ReturnBook(bookId); err != nil {
+		if errors.Is(err, types.ErrBookNotExist) {
+			http.Error(w, err.Error(), http.StatusNotFound)
+		} else if errors.Is(err, types.ErrBookStatusConflict) {
+			http.Error(w, err.Error(), http.StatusConflict)
+		}
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (s *LibraryServer) handleGetAuthors(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(s.Service.GetAuthors())
 }
